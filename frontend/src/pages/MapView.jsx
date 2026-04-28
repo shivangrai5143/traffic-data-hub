@@ -94,7 +94,7 @@ export default function MapView() {
           </h1>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: 6 }}>
             Interactive choropleth showing accident density by Indian state.
-            Use the time slider or press <strong style={{ color: 'var(--accent)' }}>Play</strong> to animate through years.
+            Use the time slider or press <button onClick={() => setPlaying(p => !p)} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontWeight: 800, cursor: 'pointer', padding: 0, fontSize: 'inherit', fontFamily: 'inherit', textDecoration: 'underline dotted', textUnderlineOffset: 3 }}>Play</button> to animate through years.
           </p>
         </div>
 

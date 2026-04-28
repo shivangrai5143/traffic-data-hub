@@ -223,17 +223,7 @@ const INDIA_STATES = [
   },
 ]
 
-// Map from our dataset state names → SVG state IDs
-const STATE_NAME_TO_ID = {
-  'delhi':       'DL',
-  'karnataka':   'KA',
-  'maharashtra': 'MH',
-  'punjab':      'PB',
-  'tamil nadu':  'TN',
-  'telangana':   'TS',
-  'west bengal': 'WB',
-}
-
+// Map lookup handled dynamically in component
 // ── Component ────────────────────────────────────────────────────────────
 export default function ChoroplethMap({ mapData, loading, year }) {
   const [tooltip, setTooltip] = useState(null)
@@ -243,18 +233,26 @@ export default function ChoroplethMap({ mapData, loading, year }) {
   const countById = useMemo(() => {
     if (!mapData?.states) return {}
     const lookup = {}
-    Object.entries(mapData.states).forEach(([stateName, count]) => {
-      const id = STATE_NAME_TO_ID[stateName.toLowerCase().trim()]
-      if (id) lookup[id] = { count, stateName }
-      else console.warn('[ChoroplethMap] Unmatched state:', stateName)
+    
+    INDIA_STATES.forEach(svgState => {
+      const stateKey = Object.keys(mapData.states).find(
+        k => k.toUpperCase() === svgState.name.toUpperCase()
+      )
+      
+      if (stateKey && mapData.states[stateKey] !== undefined) {
+        lookup[svgState.id] = { count: mapData.states[stateKey], stateName: stateKey }
+      } else {
+        lookup[svgState.id] = { count: 0, stateName: svgState.name.toUpperCase() }
+      }
     })
     return lookup
   }, [mapData])
 
-  // Color scale bounds
   const { minVal, maxVal } = useMemo(() => {
-    const vals = Object.values(countById).map(v => v.count)
-    return { minVal: Math.min(...vals, 0), maxVal: Math.max(...vals, 1) }
+    // Only consider non-zero values for color scaling to keep colors vibrant
+    const validVals = Object.values(countById).map(v => v.count).filter(c => c > 0)
+    if (validVals.length === 0) return { minVal: 0, maxVal: 1 }
+    return { minVal: Math.min(...validVals), maxVal: Math.max(...validVals) }
   }, [countById])
 
   const handleMouseMove = (e, state, entry) => {
@@ -294,11 +292,11 @@ export default function ChoroplethMap({ mapData, loading, year }) {
 
         {INDIA_STATES.map(state => {
           const entry = countById[state.id]
-          const hasData = Boolean(entry)
-          const fill = hasData
-            ? getColor(entry.count, minVal, maxVal)
-            : '#1e293b'
-          const stroke = hasData ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)'
+          const isMissing = !entry || entry.count === 0
+          const fill = isMissing
+            ? '#9ca3af'
+            : getColor(entry.count, minVal, maxVal)
+          const stroke = isMissing ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.25)'
 
           return (
             <path
@@ -309,8 +307,8 @@ export default function ChoroplethMap({ mapData, loading, year }) {
               strokeWidth={0.15}
               style={{
                 transition: 'fill 0.5s ease',
-                cursor: hasData ? 'pointer' : 'default',
-                filter: hasData ? 'url(#state-shadow)' : 'none',
+                cursor: !isMissing ? 'pointer' : 'default',
+                filter: !isMissing ? 'url(#state-shadow)' : 'none',
               }}
               onMouseEnter={e => handleMouseMove(e, state, entry)}
               onMouseMove={e => handleMouseMove(e, state, entry)}
@@ -320,7 +318,7 @@ export default function ChoroplethMap({ mapData, loading, year }) {
         })}
 
         {/* State labels for data states */}
-        {INDIA_STATES.filter(s => countById[s.id]).map(state => (
+        {INDIA_STATES.filter(s => countById[s.id] && countById[s.id].count > 0).map(state => (
           <text
             key={`label-${state.id}`}
             x={state.cx}
@@ -360,7 +358,7 @@ export default function ChoroplethMap({ mapData, loading, year }) {
           <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, fontSize: '0.9rem' }}>
             {tooltip.entry?.stateName ?? tooltip.state.name}
           </div>
-          {tooltip.entry ? (
+          {tooltip.entry && tooltip.entry.count > 0 ? (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginBottom: 4 }}>
                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>Accidents</span>

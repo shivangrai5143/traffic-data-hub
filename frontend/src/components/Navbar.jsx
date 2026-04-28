@@ -1,13 +1,23 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 const NAV_LINKS = ['Dashboard', 'Analytics', 'Insights', 'Map']
 
 export default function Navbar({ active, onNav, backendOnline }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark')
+  }
 
   return (
     <header style={{
-      background: 'rgba(10,13,20,0.85)',
+      background: 'var(--bg-nav)',
       borderBottom: '1px solid var(--border)',
       backdropFilter: 'blur(16px)',
       WebkitBackdropFilter: 'blur(16px)',
@@ -58,20 +68,43 @@ export default function Navbar({ active, onNav, backendOnline }) {
           ))}
         </nav>
 
-        {/* Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <div
-            className={backendOnline ? 'pulse' : ''}
+        {/* Status & Theme */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+          <button 
+            onClick={toggleTheme}
             style={{
-              width: 8, height: 8,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-secondary)',
               borderRadius: '50%',
-              background: backendOnline ? 'var(--accent-green)' : 'var(--accent-red)',
-              boxShadow: backendOnline ? '0 0 8px var(--accent-green)' : '0 0 8px var(--accent-red)',
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              fontSize: '1rem',
             }}
-          />
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-            {backendOnline ? 'API Online' : 'API Offline'}
-          </span>
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div
+              className={backendOnline ? 'pulse' : ''}
+              style={{
+                width: 8, height: 8,
+                borderRadius: '50%',
+                background: backendOnline ? 'var(--accent-green)' : 'var(--accent-red)',
+                boxShadow: backendOnline ? '0 0 8px var(--accent-green)' : '0 0 8px var(--accent-red)',
+              }}
+            />
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+              {backendOnline ? 'API Online' : 'API Offline'}
+            </span>
+          </div>
         </div>
       </div>
     </header>

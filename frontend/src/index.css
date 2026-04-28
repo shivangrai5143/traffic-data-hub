@@ -6,6 +6,7 @@
   --bg-surface:     #111622;
   --bg-card:        rgba(255,255,255,0.04);
   --bg-card-hover:  rgba(255,255,255,0.07);
+  --bg-nav:         rgba(10,13,20,0.85);
   --border:         rgba(255,255,255,0.08);
   --border-active:  rgba(59,130,246,0.5);
 
@@ -23,6 +24,22 @@
   --radius-sm:      8px;
   --radius-lg:      16px;
   --shadow-glow:    0 0 40px rgba(59,130,246,0.12);
+}
+
+[data-theme="light"] {
+  --bg-base:        #f8fafc;
+  --bg-surface:     #ffffff;
+  --bg-card:        rgba(0,0,0,0.02);
+  --bg-card-hover:  rgba(0,0,0,0.04);
+  --bg-nav:         rgba(255,255,255,0.85);
+  --border:         rgba(0,0,0,0.08);
+  --border-active:  rgba(59,130,246,0.4);
+
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  
+  --shadow-glow:    0 0 30px rgba(59,130,246,0.15);
 }
 
 /* ── Base Reset ─────────────────────────────────────────────── */

@@ -19,6 +19,7 @@ import os
 import glob
 import pandas as pd
 import numpy as np
+import json
 from functools import lru_cache
 from typing import Optional
 
@@ -34,6 +35,15 @@ def _find_data_file() -> str:
         return sorted(csvs)[0]
     raise FileNotFoundError(f"No CSV dataset found in {_DATA_DIR}")
 
+@lru_cache(maxsize=1)
+def _get_geojson_states() -> list[str]:
+    path = os.path.join(_DATA_DIR, "india.json")
+    if not os.path.exists(path):
+        return []
+    with open(path, "r") as f:
+        geo = json.load(f)
+    return [feature["properties"]["STNAME"] for feature in geo.get("features", [])]
+
 # ── Load once ─────────────────────────────────────────────────────────────
 @lru_cache(maxsize=1)
 def _load() -> pd.DataFrame:
@@ -48,6 +58,7 @@ def _load() -> pd.DataFrame:
 
     # Build unified location label: "City, State"
     if "city" in df.columns and "state" in df.columns:
+        df["state"] = df["state"].str.upper().str.replace("&", "AND")
         df["location"] = df["city"] + ", " + df["state"]
     elif "location" not in df.columns:
         df["location"] = "Unknown"
@@ -429,8 +440,12 @@ def get_available_years() -> list[int]:
 def get_map_data(year: Optional[int] = None, severity: Optional[str] = None) -> dict:
     """Return per-state accident counts (and severity breakdown) for the given year."""
     df = _load()
+    geojson_states = _get_geojson_states()
+    # If no states in geojson (fallback), use df states
+    all_states = geojson_states if geojson_states else df["state"].unique().tolist() if "state" in df.columns else []
+
     if "state" not in df.columns:
-        return {"states": {}, "year": year, "total": 0}
+        return {"states": {s: 0 for s in all_states}, "year": year, "total": 0}
 
     df["year"] = df["date"].dt.year
 
@@ -439,33 +454,44 @@ def get_map_data(year: Optional[int] = None, severity: Optional[str] = None) -> 
     if severity and severity.lower() not in ("all", ""):
         df = df[df["severity"].str.lower() == severity.lower()]
 
-    if df.empty:
-        return {"states": {}, "year": year, "total": 0}
-
     # Per-state totals
     state_counts = df.groupby("state").size().to_dict()
-    state_counts = {k: int(v) for k, v in state_counts.items()}
+    
+    # Fill missing states with 0
+    final_state_counts = {}
+    for state in all_states:
+        # Match GeoJSON STNAME (e.g., "JAMMU & KASHMIR") with dataset state (e.g., "JAMMU AND KASHMIR")
+        # Since we replaced & with AND in df, let's normalize the geojson state to check against df
+        df_state_key = state.upper().replace("&", "AND")
+        final_state_counts[state] = int(state_counts.get(df_state_key, 0))
 
     # Per-state severity breakdown
     sev_breakdown: dict[str, dict] = {}
     if "severity" in df.columns:
-        for state, grp in df.groupby("state"):
-            sev_breakdown[state] = {
-                "Fatal": int((grp["severity"] == "Fatal").sum()),
-                "Major": int((grp["severity"] == "Major").sum()),
-                "Minor": int((grp["severity"] == "Minor").sum()),
-            }
+        for state in all_states:
+            df_state_key = state.upper().replace("&", "AND")
+            # Filter df for this state
+            grp = df[df["state"] == df_state_key]
+            if not grp.empty:
+                sev_breakdown[state] = {
+                    "Fatal": int((grp["severity"] == "Fatal").sum()),
+                    "Major": int((grp["severity"] == "Major").sum()),
+                    "Minor": int((grp["severity"] == "Minor").sum()),
+                }
 
     # Per-state avg risk
     avg_risk: dict[str, float] = {}
     if "risk_score" in df.columns:
-        avg_risk = df.groupby("state")["risk_score"].mean().round(3).to_dict()
-        avg_risk = {k: float(v) for k, v in avg_risk.items()}
+        risk_grouped = df.groupby("state")["risk_score"].mean().round(3).to_dict()
+        for state in all_states:
+            df_state_key = state.upper().replace("&", "AND")
+            if df_state_key in risk_grouped:
+                avg_risk[state] = float(risk_grouped[df_state_key])
 
     return {
         "year":      year,
         "total":     int(len(df)),
-        "states":    state_counts,
+        "states":    final_state_counts,
         "severity":  sev_breakdown,
         "avg_risk":  avg_risk,
     }

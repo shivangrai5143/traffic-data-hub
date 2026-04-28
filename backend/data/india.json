@@ -1,0 +1,155 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "properties": {
+        "STNAME": "JAMMU & KASHMIR"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "HIMACHAL PRADESH"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "PUNJAB"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "UTTARAKHAND"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "HARYANA"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "DELHI"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "RAJASTHAN"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "UTTAR PRADESH"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "BIHAR"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "SIKKIM"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "ARUNACHAL PRADESH"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "NAGALAND"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "MANIPUR"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "MIZORAM"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "TRIPURA"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "MEGHALAYA"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "ASSAM"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "WEST BENGAL"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "JHARKHAND"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "ODISHA"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "CHHATTISGARH"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "MADHYA PRADESH"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "GUJARAT"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "MAHARASHTRA"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "TELANGANA"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "ANDHRA PRADESH"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "KARNATAKA"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "TAMIL NADU"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "KERALA"
+      }
+    },
+    {
+      "properties": {
+        "STNAME": "GOA"
+      }
+    }
+  ]
+}
