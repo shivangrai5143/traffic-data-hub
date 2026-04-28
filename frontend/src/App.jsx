@@ -3,6 +3,7 @@ import Navbar from './components/Navbar'
 import Dashboard from './pages/Dashboard'
 import Analytics from './pages/Analytics'
 import Insights from './pages/Insights'
+import MapView from './pages/MapView'
 import { useTrafficData } from './hooks/useTrafficData'
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
       {activePage === 'Dashboard' && <Dashboard data={trafficData} />}
       {activePage === 'Analytics'  && <Analytics  data={trafficData} />}
       {activePage === 'Insights'   && <Insights />}
+      {activePage === 'Map'        && <MapView />}
     </div>
   )
 }

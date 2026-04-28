@@ -177,3 +177,20 @@ def insights():
 @app.get("/api/filter-options", tags=["Filters"])
 def filter_options():
     return pipeline.get_filter_options()
+
+
+# ── Map: Available Years ───────────────────────────────────────────────────
+@app.get("/api/map/years", tags=["Map"])
+def map_years():
+    """Return sorted list of years present in the dataset."""
+    return pipeline.get_available_years()
+
+
+# ── Map: Choropleth Data ───────────────────────────────────────────────────
+@app.get("/api/map", tags=["Map"])
+def map_data(
+    year:     Optional[int] = Query(None, description="Filter to a specific year; omit for all-years aggregate"),
+    severity: Optional[str] = Query(None),
+):
+    """Return per-state accident counts, severity breakdown, and avg risk for choropleth map."""
+    return pipeline.get_map_data(year, severity)

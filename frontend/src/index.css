@@ -196,3 +196,62 @@ body {
 .badge-fatal  { background: rgba(239,68,68,0.15);  color: #ef4444; }
 .badge-major  { background: rgba(245,158,11,0.15); color: #f59e0b; }
 .badge-minor  { background: rgba(34,197,94,0.15);  color: #22c55e; }
+
+/* ── Time Slider range input ──────────────────────────────────────────── */
+.time-range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+.time-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  box-shadow: 0 0 12px rgba(59,130,246,0.6), 0 0 0 3px rgba(59,130,246,0.15);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.time-range-input::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 18px rgba(59,130,246,0.8), 0 0 0 4px rgba(59,130,246,0.2);
+}
+.time-range-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  box-shadow: 0 0 12px rgba(59,130,246,0.6);
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.time-range-input::-moz-range-track {
+  background: transparent;
+  height: 4px;
+}
+
+/* ── Map spinner ──────────────────────────────────────────────────────── */
+@keyframes map-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Tooltip fade-in ──────────────────────────────────────────────────── */
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Pulse text (animation status) ───────────────────────────────────── */
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}

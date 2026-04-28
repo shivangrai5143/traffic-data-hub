@@ -417,3 +417,55 @@ def get_filter_options() -> dict:
         "states":     ["All"] + states,
         "severities": ["All", "Fatal", "Major", "Minor"],
     }
+
+
+def get_available_years() -> list[int]:
+    """Return sorted list of years present in the dataset."""
+    df = _load()
+    df["year"] = df["date"].dt.year
+    return sorted(df["year"].dropna().unique().astype(int).tolist())
+
+
+def get_map_data(year: Optional[int] = None, severity: Optional[str] = None) -> dict:
+    """Return per-state accident counts (and severity breakdown) for the given year."""
+    df = _load()
+    if "state" not in df.columns:
+        return {"states": {}, "year": year, "total": 0}
+
+    df["year"] = df["date"].dt.year
+
+    if year is not None:
+        df = df[df["year"] == year]
+    if severity and severity.lower() not in ("all", ""):
+        df = df[df["severity"].str.lower() == severity.lower()]
+
+    if df.empty:
+        return {"states": {}, "year": year, "total": 0}
+
+    # Per-state totals
+    state_counts = df.groupby("state").size().to_dict()
+    state_counts = {k: int(v) for k, v in state_counts.items()}
+
+    # Per-state severity breakdown
+    sev_breakdown: dict[str, dict] = {}
+    if "severity" in df.columns:
+        for state, grp in df.groupby("state"):
+            sev_breakdown[state] = {
+                "Fatal": int((grp["severity"] == "Fatal").sum()),
+                "Major": int((grp["severity"] == "Major").sum()),
+                "Minor": int((grp["severity"] == "Minor").sum()),
+            }
+
+    # Per-state avg risk
+    avg_risk: dict[str, float] = {}
+    if "risk_score" in df.columns:
+        avg_risk = df.groupby("state")["risk_score"].mean().round(3).to_dict()
+        avg_risk = {k: float(v) for k, v in avg_risk.items()}
+
+    return {
+        "year":      year,
+        "total":     int(len(df)),
+        "states":    state_counts,
+        "severity":  sev_breakdown,
+        "avg_risk":  avg_risk,
+    }

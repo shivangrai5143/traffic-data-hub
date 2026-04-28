@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-const NAV_LINKS = ['Dashboard', 'Analytics', 'Insights']
+const NAV_LINKS = ['Dashboard', 'Analytics', 'Insights', 'Map']
 
 export default function Navbar({ active, onNav, backendOnline }) {
   const [menuOpen, setMenuOpen] = useState(false)
