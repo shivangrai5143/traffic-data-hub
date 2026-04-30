@@ -188,23 +188,3 @@ Automatically computed from the dataset:
 | Deploy (BE) | Render / Railway |
 
 ---
-
-## 🎤 Interview Talking Points (Phase 10)
-
-**Data Pipeline:**  
-Raw CSV → `pipeline.py` loads once with `@lru_cache` → filter helper slices by date/location/severity → aggregation functions return JSON.
-
-**API Design:**  
-REST endpoints, each single-responsibility. Query params for all filters. No auth needed for read-only analytics. CORS enabled for cross-origin React calls.
-
-**Visualization Choices:**  
-- Line chart for trends (shows temporal patterns)
-- Bar chart for hourly/cause (categorical comparison)
-- Donut pie for severity (part-of-whole)
-- Radar for day-of-week (circular periodicity)
-- Composed chart for yearly (multi-metric)
-
-**Key Insights:**  
-Derived from real aggregations — no approximations. `get_insights()` auto-computes 8 findings every time the backend starts.
-
----
