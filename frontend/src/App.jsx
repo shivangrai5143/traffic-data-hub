@@ -32,6 +32,7 @@ export default function App() {
         <StoryMode
           onClose={() => setStoryOpen(false)}
           onNavigate={page => { setActivePage(page); setStoryOpen(false) }}
+          data={trafficData}
         />
       )}
     </div>
