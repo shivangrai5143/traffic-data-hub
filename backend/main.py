@@ -124,8 +124,9 @@ def cities(
     start:    Optional[str] = Query(None),
     end:      Optional[str] = Query(None),
     severity: Optional[str] = Query(None),
+    state:    Optional[str] = Query(None),
 ):
-    return pipeline.get_city_breakdown(start, end, severity)
+    return pipeline.get_city_breakdown(start, end, severity, state)
 
 
 # ── Road Type Breakdown (NEW) ─────────────────────────────────────────────
@@ -169,8 +170,10 @@ def data_quality():
 
 # ── Insights (NEW — Phase 6) ──────────────────────────────────────────────
 @app.get("/api/insights", tags=["Analytics"])
-def insights():
-    return pipeline.get_insights()
+def insights(
+    location: Optional[str] = Query(None),
+):
+    return pipeline.get_insights(location)
 
 
 # ── Filter Options ────────────────────────────────────────────────────────
@@ -194,3 +197,15 @@ def map_data(
 ):
     """Return per-state accident counts, severity breakdown, and avg risk for choropleth map."""
     return pipeline.get_map_data(year, severity)
+
+
+# ── Export: Filtered CSV Data ─────────────────────────────────────────────
+@app.get("/api/export", tags=["System"])
+def export(
+    start:    Optional[str] = Query(None),
+    end:      Optional[str] = Query(None),
+    location: Optional[str] = Query(None),
+    severity: Optional[str] = Query(None),
+):
+    """Return filtered rows as JSON for client-side CSV download (max 5000 rows)."""
+    return pipeline.get_export(start, end, location, severity)

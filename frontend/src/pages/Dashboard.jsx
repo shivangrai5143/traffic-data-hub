@@ -7,6 +7,7 @@ import SeverityChart from '../components/SeverityChart'
 import LocationsTable from '../components/LocationsTable'
 import CauseChart from '../components/CauseChart'
 import RiskScoreChart from '../components/RiskScoreChart'
+import client from '../api/client'
 
 export default function Dashboard({ data }) {
   const {
@@ -15,10 +16,56 @@ export default function Dashboard({ data }) {
     loading,
   } = data
 
-  const fmt = n => (n != null ? Number(n).toLocaleString() : '—')
+  const fmt = n => (n != null ? Number(n).toLocaleString() : '-')
+
+  const downloadCSV = async () => {
+    const p = {}
+    if (filters.start)                                  p.start    = filters.start
+    if (filters.end)                                    p.end      = filters.end
+    if (filters.location && filters.location !== 'All') p.location = filters.location
+    if (filters.severity && filters.severity !== 'All') p.severity = filters.severity
+    try {
+      const { data: rows } = await client.get('/api/export', { params: p })
+      if (!rows.length) return alert('No data to export for current filters.')
+      const headers = Object.keys(rows[0])
+      const csv = [headers.join(','), ...rows.map(r => headers.map(h => JSON.stringify(r[h] ?? '')).join(','))].join('\n')
+      const blob = new Blob([csv], { type: 'text/csv' })
+      const url  = URL.createObjectURL(blob)
+      const a    = document.createElement('a'); a.href = url
+      a.download = 'traffic_export.csv'; a.click()
+      URL.revokeObjectURL(url)
+    } catch(e) { console.error(e) }
+  }
 
   return (
     <main style={{ maxWidth: 1400, margin: '0 auto', padding: '28px 24px 48px' }}>
+
+      {/* Dashboard header + Export */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>Dashboard</h1>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 4 }}>Real-time overview of Indian road accident analytics</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={downloadCSV}
+            style={{ padding: '8px 16px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-card)', color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={() => window.print()}
+            style={{ padding: '8px 16px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-card)', color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#a78bfa'; e.currentTarget.style.color = '#a78bfa' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+          >
+            Print PDF
+          </button>
+        </div>
+      </div>
+
       <FilterBar
         filters={filters}
         setFilters={setFilters}

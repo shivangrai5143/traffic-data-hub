@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 
-const NAV_LINKS = ['Dashboard', 'Analytics', 'Insights', 'Map']
+const NAV_LINKS = ['Dashboard', 'Analytics', 'Insights', 'Compare', 'Map']
 
-export default function Navbar({ active, onNav, backendOnline }) {
+export default function Navbar({ active, onNav, backendOnline, onStory }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
 
@@ -68,8 +68,30 @@ export default function Navbar({ active, onNav, backendOnline }) {
           ))}
         </nav>
 
-        {/* Status & Theme */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+        {/* Story Mode + Status + Theme */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          {/* Story Mode button */}
+          <button
+            onClick={onStory}
+            style={{
+              background: 'linear-gradient(135deg, rgba(167,139,250,0.15), rgba(59,130,246,0.15))',
+              border: '1px solid rgba(167,139,250,0.4)',
+              color: '#a78bfa',
+              borderRadius: 8,
+              padding: '5px 13px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              letterSpacing: '0.03em',
+              transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(59,130,246,0.25))'; e.currentTarget.style.borderColor = '#a78bfa' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(167,139,250,0.15), rgba(59,130,246,0.15))'; e.currentTarget.style.borderColor = 'rgba(167,139,250,0.4)' }}
+          >
+            <span>&#x1F4D6;</span> Story Mode
+          </button>
           <button 
             onClick={toggleTheme}
             style={{

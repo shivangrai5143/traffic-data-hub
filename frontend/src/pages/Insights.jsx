@@ -43,17 +43,19 @@ function DataQualityBadge({ dq }) {
   )
 }
 
-export default function Insights() {
+export default function Insights({ filterOptions }) {
   const [insights,    setInsights]    = useState([])
   const [yearlyData,  setYearlyData]  = useState([])
   const [dataQuality, setDataQuality] = useState(null)
   const [loading,     setLoading]     = useState(true)
+  const [location,    setLocation]    = useState('All')
 
   useEffect(() => {
     setLoading(true)
+    const params = location && location !== 'All' ? { location } : {}
     Promise.all([
-      client.get('/api/insights'),
-      client.get('/api/yearly-trend'),
+      client.get('/api/insights',     { params }),
+      client.get('/api/yearly-trend', { params }),
       client.get('/api/data-quality'),
     ]).then(([ins, yr, dq]) => {
       setInsights(ins.data)
@@ -61,20 +63,40 @@ export default function Insights() {
       setDataQuality(dq.data)
     }).catch(console.error)
       .finally(() => setLoading(false))
-  }, [])
+  }, [location])
 
   return (
     <main style={{ maxWidth: 1400, margin: '0 auto', padding: '28px 24px 64px' }}>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span>💡</span> Key Insights
-        </h1>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: 8, maxWidth: 640 }}>
-          Automatically computed narrative findings from <strong style={{ color: 'var(--accent)' }}>20,000 real Indian road accident records</strong>.
-          Each insight is derived directly from the dataset — no approximations.
-        </p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span>💡</span> Key Insights
+            </h1>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: 8, maxWidth: 640 }}>
+              Automatically computed narrative findings from <strong style={{ color: 'var(--accent)' }}>20,000 real Indian road accident records</strong>.
+              Each insight is derived directly from the dataset — no approximations.
+            </p>
+          </div>
+          {/* Location filter */}
+          {filterOptions && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+              <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filter by State/City</label>
+              <select
+                value={location}
+                onChange={e => setLocation(e.target.value)}
+                className="filter-select"
+                style={{ minWidth: 200 }}
+              >
+                {(filterOptions.locations ?? ['All']).map(l => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Data Quality Badge — Phase 3 */}

@@ -225,7 +225,7 @@ const INDIA_STATES = [
 
 // Map lookup handled dynamically in component
 // ── Component ────────────────────────────────────────────────────────────
-export default function ChoroplethMap({ mapData, loading, year }) {
+export default function ChoroplethMap({ mapData, loading, year, onStateClick, selectedState }) {
   const [tooltip, setTooltip] = useState(null)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
@@ -303,8 +303,18 @@ export default function ChoroplethMap({ mapData, loading, year }) {
               key={state.id}
               d={state.d}
               fill={fill}
-              stroke={stroke}
-              strokeWidth={0.15}
+              stroke={
+                selectedState && (selectedState.toUpperCase() === state.name.toUpperCase() ||
+                  selectedState.toUpperCase() === (entry?.stateName ?? '').toUpperCase())
+                  ? '#fff'
+                  : stroke
+              }
+              strokeWidth={
+                selectedState && (selectedState.toUpperCase() === state.name.toUpperCase() ||
+                  selectedState.toUpperCase() === (entry?.stateName ?? '').toUpperCase())
+                  ? 0.5
+                  : 0.15
+              }
               style={{
                 transition: 'fill 0.5s ease',
                 cursor: !isMissing ? 'pointer' : 'default',
@@ -313,6 +323,11 @@ export default function ChoroplethMap({ mapData, loading, year }) {
               onMouseEnter={e => handleMouseMove(e, state, entry)}
               onMouseMove={e => handleMouseMove(e, state, entry)}
               onMouseLeave={() => setTooltip(null)}
+              onClick={() => {
+                if (!isMissing && onStateClick) {
+                  onStateClick(entry?.stateName ?? state.name)
+                }
+              }}
             />
           )
         })}

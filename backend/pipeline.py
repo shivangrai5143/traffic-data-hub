@@ -227,8 +227,13 @@ def get_cause_breakdown(start=None, end=None, location=None, severity=None) -> l
     return counts.to_dict(orient="records")
 
 
-def get_city_breakdown(start=None, end=None, severity=None) -> list[dict]:
+def get_city_breakdown(start=None, end=None, severity=None, state=None) -> list[dict]:
     df = _filter(_load(), start, end, severity=severity)
+    # Optional state-level drill-down
+    if state and state.lower() not in ("all", ""):
+        state_up = state.upper().replace("&", "AND")
+        if "state" in df.columns:
+            df = df[df["state"] == state_up]
     col = "city" if "city" in df.columns else "location"
     counts = df.groupby(col).agg(
         accidents  = ("id",         "count"),
@@ -302,9 +307,19 @@ def get_data_quality() -> dict:
     }
 
 
-def get_insights() -> list[dict]:
+def get_insights(location: Optional[str] = None) -> list[dict]:
     """Compute 8 key narrative insights from real data (Phase 6)."""
     df = _load()
+    # Apply optional location filter (state or city)
+    if location and location.lower() not in ("all", ""):
+        mask = (
+            (df["location"] == location) |
+            (df["city"] == location if "city" in df.columns else False) |
+            (df["state"] == location.upper().replace("&", "AND") if "state" in df.columns else False)
+        )
+        df = df[mask]
+    if df.empty:
+        return []
     insights = []
 
     # 1. Deadliest hour
@@ -415,6 +430,17 @@ def get_insights() -> list[dict]:
         })
 
     return insights
+
+
+def get_export(start=None, end=None, location=None, severity=None) -> list[dict]:
+    """Return filtered dataset rows for CSV download (capped at 5000 rows)."""
+    df = _filter(_load(), start, end, location, severity)
+    cols = [c for c in ["date", "city", "state", "severity", "cause", "weather",
+                        "road_type", "hour", "day_of_week", "risk_score",
+                        "fatalities", "injuries", "vehicles_involved"] if c in df.columns]
+    df = df[cols].head(5000)
+    df["date"] = df["date"].astype(str)
+    return df.to_dict(orient="records")
 
 
 def get_filter_options() -> dict:

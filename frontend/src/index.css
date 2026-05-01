@@ -272,3 +272,16 @@ body {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.4; }
 }
+
+/* -- Slide-in from right (StateDrillDown panel) -------------------------- */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+
+/* -- Print / PDF styles -------------------------------------------------- */
+@media print {
+  header, .glass-card:not(.print-visible) { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: #fff !important; color: #000 !important; }
+  button, nav, .filter-select { display: none !important; }
+}

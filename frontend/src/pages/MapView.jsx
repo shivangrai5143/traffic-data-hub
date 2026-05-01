@@ -2,16 +2,18 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import ChoroplethMap from '../components/ChoroplethMap'
 import TimeSlider from '../components/TimeSlider'
 import MapLegend from '../components/MapLegend'
+import StateDrillDown from '../components/StateDrillDown'
 import client from '../api/client'
 
 export default function MapView() {
-  const [years, setYears]       = useState([])
-  const [year, setYear]         = useState(null)
-  const [mapData, setMapData]   = useState(null)
-  const [loading, setLoading]   = useState(true)
-  const [playing, setPlaying]   = useState(false)
-  const [speed, setSpeed]       = useState(1)
-  const [severity, setSeverity] = useState('All')
+  const [years, setYears]             = useState([])
+  const [year, setYear]               = useState(null)
+  const [mapData, setMapData]         = useState(null)
+  const [loading, setLoading]         = useState(true)
+  const [playing, setPlaying]         = useState(false)
+  const [speed, setSpeed]             = useState(1)
+  const [severity, setSeverity]       = useState('All')
+  const [selectedState, setSelectedState] = useState(null)
 
   // Response cache: Map<`${year}-${severity}`, data>
   const cache = useRef(new Map())
@@ -143,12 +145,27 @@ export default function MapView() {
 
         {/* Map panel */}
         <div className="glass-card" style={{ padding: 0, overflow: 'hidden', position: 'relative', minHeight: 520 }}>
+          {/* Click hint */}
+          <div style={{
+            position: 'absolute', top: 12, left: 14, zIndex: 6,
+            fontSize: '0.7rem', color: 'var(--text-muted)',
+            background: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: 6, padding: '4px 10px', pointerEvents: 'none',
+          }}>
+            🖱️ Click a state to drill-down
+          </div>
           {/* Map legend overlay */}
           <div style={{ position: 'absolute', bottom: 16, right: 16, zIndex: 5 }}>
             <MapLegend minVal={minVal} maxVal={maxVal} />
           </div>
           <div style={{ width: '100%', height: '100%', minHeight: 520, padding: 12 }}>
-            <ChoroplethMap mapData={mapData} loading={loading} year={year} />
+            <ChoroplethMap
+              mapData={mapData}
+              loading={loading}
+              year={year}
+              onStateClick={s => setSelectedState(s)}
+              selectedState={selectedState}
+            />
           </div>
         </div>
 
@@ -206,7 +223,7 @@ export default function MapView() {
         </div>
       </div>
 
-      {/* ── Time Slider ─────────────────────────────────────────────── */}
+      {/* ── Time Slider ───────────────────────────────────────── */}
       <TimeSlider
         year={year}
         setYear={y => { setPlaying(false); setYear(y) }}
@@ -215,6 +232,12 @@ export default function MapView() {
         setPlaying={setPlaying}
         speed={speed}
         setSpeed={setSpeed}
+      />
+
+      {/* State Drill-Down Panel */}
+      <StateDrillDown
+        stateName={selectedState}
+        onClose={() => setSelectedState(null)}
       />
     </main>
   )
