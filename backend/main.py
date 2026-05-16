@@ -176,6 +176,24 @@ def insights(
     return pipeline.get_insights(location)
 
 
+# ── Recommendations (NEW — Phase 7) ───────────────────────────────────────
+@app.get("/api/recommendations", tags=["Analytics"])
+def recommendations(
+    location: Optional[str] = Query(None),
+):
+    return pipeline.get_recommendations(location)
+
+
+# ── Predictive ML (NEW — Phase 6) ─────────────────────────────────────────
+@app.get("/api/predict", tags=["Analytics"])
+def predict(
+    location: Optional[str] = Query(None),
+):
+    return pipeline.get_risk_predictions(location)
+
+
+
+
 # ── Filter Options ────────────────────────────────────────────────────────
 @app.get("/api/filter-options", tags=["Filters"])
 def filter_options():

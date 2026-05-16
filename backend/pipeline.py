@@ -432,6 +432,157 @@ def get_insights(location: Optional[str] = None) -> list[dict]:
     return insights
 
 
+# ── Risk Prediction Layer (Phase 6) ───────────────────────────────────────
+@lru_cache(maxsize=1)
+def _get_risk_model():
+    try:
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.preprocessing import LabelEncoder
+    except ImportError:
+        return None, None, []
+        
+    df = _load().copy()
+    if df.empty or "severity" not in df.columns:
+        return None, None, []
+        
+    df["is_fatal"] = (df["severity"] == "Fatal").astype(int)
+    
+    features = []
+    if "hour" in df.columns: features.append("hour")
+    if "is_weekend" in df.columns: features.append("is_weekend")
+    if "weather" in df.columns: features.append("weather")
+    if "road_type" in df.columns: features.append("road_type")
+    
+    if not features: return None, None, []
+    
+    df_ml = df[features + ["is_fatal"]].dropna()
+    encoders = {}
+    for col in ["weather", "road_type"]:
+        if col in features:
+            le = LabelEncoder()
+            df_ml[col] = le.fit_transform(df_ml[col].astype(str))
+            encoders[col] = le
+            
+    X = df_ml[features]
+    y = df_ml["is_fatal"]
+    
+    clf = RandomForestClassifier(n_estimators=50, random_state=42, max_depth=5)
+    clf.fit(X, y)
+    
+    return clf, encoders, features
+
+def get_risk_predictions(location: Optional[str] = None) -> dict:
+    """Uses a Random Forest to predict severity probabilities (Phase 6)."""
+    clf, encoders, features = _get_risk_model()
+    if not clf:
+        return {"error": "ML Model not available. Scikit-learn might be missing."}
+        
+    df = _load()
+    if location and location.lower() not in ("all", ""):
+        mask = (
+            (df["location"] == location) |
+            (df["city"] == location if "city" in df.columns else False) |
+            (df["state"] == location.upper().replace("&", "AND") if "state" in df.columns else False)
+        )
+        df = df[mask]
+        
+    if df.empty: return {"error": "No data for this location."}
+    
+    importances = clf.feature_importances_
+    factors = [{"feature": f, "weight": round(float(w), 3)} for f, w in zip(features, importances)]
+    factors = sorted(factors, key=lambda x: x["weight"], reverse=True)
+    
+    df_pred = df[features].copy().dropna()
+    if df_pred.empty: return {"error": "No valid data for prediction."}
+    
+    for col, enc in encoders.items():
+        known_classes = set(enc.classes_)
+        df_pred[col] = df_pred[col].apply(lambda x: x if x in known_classes else enc.classes_[0])
+        df_pred[col] = enc.transform(df_pred[col].astype(str))
+        
+    probs = clf.predict_proba(df_pred[features])[:, 1]
+    
+    avg_prob = float(probs.mean())
+    high_risk_count = int((probs > 0.6).sum())
+    
+    return {
+        "model_type": "RandomForestClassifier",
+        "average_fatality_probability": round(avg_prob, 3),
+        "high_risk_incidents": high_risk_count,
+        "total_analyzed": len(df_pred),
+        "risk_factors": factors
+    }
+
+def get_recommendations(location: Optional[str] = None) -> list[dict]:
+    """Generate actionable traffic recommendations based on data (Phase 7)."""
+    df = _load()
+    if location and location.lower() not in ("all", ""):
+        mask = (
+            (df["location"] == location) |
+            (df["city"] == location if "city" in df.columns else False) |
+            (df["state"] == location.upper().replace("&", "AND") if "state" in df.columns else False)
+        )
+        df = df[mask]
+    
+    if df.empty:
+        return []
+        
+    recs = []
+    
+    # 1. Night Patrol
+    night_accs = df[(df["hour"] >= 22) | (df["hour"] <= 4)]
+    if len(night_accs) > 0:
+        recs.append({
+            "id": "rec_night_patrol",
+            "type": "Enforcement",
+            "title": "Increase Night Patrol Activity",
+            "description": f"{len(night_accs):,} accidents occurred during late-night hours (10 PM - 4 AM). Deploying additional patrol units in these hours is highly recommended.",
+            "impact": "High",
+            "icon": "🚓"
+        })
+        
+    # 2. Weather
+    if "weather" in df.columns:
+        rain_fatal = df[(df["weather"].str.lower() == "rain") & (df["severity"] == "Fatal")]
+        if len(rain_fatal) > 0:
+            recs.append({
+                "id": "rec_rain_infrastructure",
+                "type": "Infrastructure",
+                "title": "Improve Wet-Weather Road Conditions",
+                "description": f"Identified {len(rain_fatal):,} fatal accidents during rainy conditions. Recommend anti-skid resurfacing and improved reflective signage in affected zones.",
+                "impact": "Critical",
+                "icon": "🌧️"
+            })
+            
+    # 3. Highway Speed
+    if "road_type" in df.columns:
+        hw_accs = df[df["road_type"].str.lower() == "highway"]
+        if len(hw_accs) > 0:
+            recs.append({
+                "id": "rec_highway_speed",
+                "type": "Policy",
+                "title": "Enforce Speed Limits on Highways",
+                "description": f"Highways account for {len(hw_accs):,} incidents. Deploy automated speed-traps and strictly enforce lane discipline to reduce severity.",
+                "impact": "Medium",
+                "icon": "🛣️"
+            })
+            
+    # 4. Hotspot Focus
+    if not df.empty:
+        top_city = df["location"].value_counts().idxmax()
+        recs.append({
+            "id": "rec_hotspot",
+            "type": "Strategic",
+            "title": f"Focus Emergency Resources on {top_city.split(',')[0]}",
+            "description": f"{top_city} is the most dense accident hotspot. Establish an emergency rapid response unit precisely in this location to reduce casualty severity.",
+            "impact": "High",
+            "icon": "🚑"
+        })
+        
+    return recs
+
+
+
 def get_export(start=None, end=None, location=None, severity=None) -> list[dict]:
     """Return filtered dataset rows for CSV download (capped at 5000 rows)."""
     df = _filter(_load(), start, end, location, severity)

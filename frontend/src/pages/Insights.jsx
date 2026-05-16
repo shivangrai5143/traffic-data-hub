@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import InsightCard from '../components/InsightCard'
 import YearlyTrendChart from '../components/YearlyTrendChart'
+import RecommendationCard from '../components/RecommendationCard'
 import client from '../api/client'
 
 function DataQualityBadge({ dq }) {
@@ -45,6 +46,8 @@ function DataQualityBadge({ dq }) {
 
 export default function Insights({ filterOptions }) {
   const [insights,    setInsights]    = useState([])
+  const [recommendations, setRecommendations] = useState([])
+  const [predictions, setPredictions] = useState(null)
   const [yearlyData,  setYearlyData]  = useState([])
   const [dataQuality, setDataQuality] = useState(null)
   const [loading,     setLoading]     = useState(true)
@@ -55,10 +58,14 @@ export default function Insights({ filterOptions }) {
     const params = location && location !== 'All' ? { location } : {}
     Promise.all([
       client.get('/api/insights',     { params }),
+      client.get('/api/recommendations',{ params }),
+      client.get('/api/predict',      { params }),
       client.get('/api/yearly-trend', { params }),
       client.get('/api/data-quality'),
-    ]).then(([ins, yr, dq]) => {
+    ]).then(([ins, recs, pred, yr, dq]) => {
       setInsights(ins.data)
+      setRecommendations(recs.data || [])
+      setPredictions(pred.data || null)
       setYearlyData(yr.data)
       setDataQuality(dq.data)
     }).catch(console.error)
@@ -146,7 +153,83 @@ export default function Insights({ filterOptions }) {
         </div>
       )}
 
+      {/* Machine Learning Risk Prediction — Phase 6 */}
+      {predictions && !predictions.error && (
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Phase 6 — AI Risk Prediction
+            </span>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+
+          <div className="glass-card fade-in" style={{ padding: '24px', display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 250px' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                {predictions.model_type}
+              </div>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>
+                Fatality Probability
+              </h3>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+                <div style={{ fontSize: '3rem', fontWeight: 800, color: predictions.average_fatality_probability > 0.4 ? '#ef4444' : '#f59e0b', lineHeight: 1 }}>
+                  {(predictions.average_fatality_probability * 100).toFixed(1)}%
+                </div>
+                <div style={{ paddingBottom: 6, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                  Avg. Risk
+                </div>
+              </div>
+              <p style={{ marginTop: 12, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Based on {predictions.total_analyzed.toLocaleString()} recent records. Model identified <strong>{predictions.high_risk_incidents.toLocaleString()}</strong> critical high-risk profiles in this region.
+              </p>
+            </div>
+
+            <div style={{ flex: '2 1 300px' }}>
+              <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: 12, fontWeight: 600 }}>Top Risk Factors (Feature Importance)</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {predictions.risk_factors?.map(f => (
+                  <div key={f.feature} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 100, fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+                      {f.feature.replace('_', ' ')}
+                    </div>
+                    <div style={{ flex: 1, height: 8, background: 'var(--bg-surface)', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${f.weight * 100}%`, background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', borderRadius: 4 }} />
+                    </div>
+                    <div style={{ width: 40, fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'right' }}>
+                      {(f.weight * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recommendations Grid — Phase 7 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, marginTop: 32 }}>
+        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Phase 7 — Actionable Recommendations
+        </span>
+        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      </div>
+
+      {loading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 16 }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: 180 }} />
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 16 }}>
+          {recommendations.map((rec, i) => (
+            <RecommendationCard key={rec.id} rec={rec} index={i} />
+          ))}
+        </div>
+      )}
+
       {/* Pipeline diagram — Phase 10 reference */}
+
       <div style={{ marginTop: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
